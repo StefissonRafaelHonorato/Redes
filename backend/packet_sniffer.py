@@ -1,39 +1,45 @@
-# backend
-import sys
-import time
-import threading
-from collections import defaultdict
-from scapy.all import sniff, IP, TCP, UDP
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
+from flask_socketio import SocketIO
+import threading, time
+from collections import defaultdict
+from scapy.all import sniff, IP, TCP, UDP, conf
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-SERVER_IP = "172.27.0.14"
+SERVER_IP = os.getenv("SERVER_IP")
+if not SERVER_IP:
+    print("!!! ATENÇÃO: Defina a variável SERVER_IP no .env")
+    exit(1)
 
+# Estrutura para armazenar dados de tráfego
 traffic_data = defaultdict(lambda: {"Entrada": 0, "Saída": 0, "protocolos": defaultdict(int)})
-latest_report = {}
 data_lock = threading.Lock()
 
+
 def process_packet(packet):
+    """Processa cada pacote capturado e atualiza a estrutura de tráfego"""
     if IP in packet:
         ip_src, ip_dst, packet_size = packet[IP].src, packet[IP].dst, len(packet)
-
         if ip_src == SERVER_IP or ip_dst == SERVER_IP:
             direction = "Entrada" if ip_dst == SERVER_IP else "Saída"
             client_ip = ip_src if ip_dst == SERVER_IP else ip_dst
             protocol = "TCP" if TCP in packet else "UDP" if UDP in packet else "OUTRO"
-            
             with data_lock:
                 traffic_data[client_ip][direction] += packet_size
                 traffic_data[client_ip]["protocolos"][protocol] += packet_size
 
+
 def generate_report():
-    global latest_report
+    """Gera relatórios a cada 5 segundos e envia via WebSocket"""
     while True:
         time.sleep(5)
-        
         with data_lock:
             if not traffic_data:
                 continue
@@ -49,35 +55,41 @@ def generate_report():
                 "protocols": dict(data["protocolos"])
             })
         
+        # Ordena pelos IPs que mais trafegaram
         report.sort(key=lambda x: x["inbound"] + x["outbound"], reverse=True)
-        latest_report = {"traffic": report}
-        print(f"Relatório gerado às {time.strftime('%H:%M:%S')} com {len(report)} clientes.")
 
-@app.route('/api/traffic_data')
-def get_traffic_data():
-    return jsonify(latest_report)
+        # Emite via WebSocket
+        socketio.emit('traffic_update', {'traffic': report})
+
+
+@app.route('/')
+def index():
+    return "Servidor rodando com WebSocket!"
+
 
 def start_sniffing_thread():
-    print(f"Iniciando a captura de pacotes no servidor {SERVER_IP}...")
+    """Thread para captura de pacotes"""
     try:
+        if conf.L2listen is None:
+            print("AVISO: L2 não disponível, usando L3 socket")
         sniff(filter="ip", prn=process_packet, store=False)
     except PermissionError:
-        print("\nERRO: Permissão negada para capturar pacotes. Tente executar como administrador/root.")
-        sys.exit(1)
+        print("ERRO: Permissão negada. Execute como administrador/root.")
+        exit(1)
     except Exception as e:
-        print(f"Ocorreu um erro inesperado na captura: {e}")
-        sys.exit(1)
+        print(f"Erro inesperado na captura: {e}")
+        exit(1)
+
 
 if __name__ == "__main__":
-    if SERVER_IP == "SEU_IP_AQUI": 
-        print("!!! ATENÇÃO: Por favor, edite o arquivo e defina a variável SERVER_IP.")
-    else:
-        sniffer_thread = threading.Thread(target=start_sniffing_thread, daemon=True)
-        sniffer_thread.start()
-        
-        report_thread = threading.Thread(target=generate_report, daemon=True)
-        report_thread.start()
-        
-        print("Servidor da API iniciado em http://127.0.0.1:5000")
-        print("Acesse http://127.0.0.1:5000/api/traffic_data para ver os dados.")
-        app.run(debug=False)
+    # Thread de sniffing
+    sniffer_thread = threading.Thread(target=start_sniffing_thread, daemon=True)
+    sniffer_thread.start()
+
+    # Thread de geração de relatórios
+    report_thread = threading.Thread(target=generate_report, daemon=True)
+    report_thread.start()
+
+    # Inicia o Flask com WebSocket
+    print(f"Servidor WebSocket rodando em http://127.0.0.1:5000")
+    socketio.run(app, host='0.0.0.0', port=5000)

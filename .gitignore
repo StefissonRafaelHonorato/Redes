@@ -1,7 +1,62 @@
-# python
-venv/
-__pycache__/
-*.pyc
+# =========================
+# Python (backend)
+# =========================
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/*.pyd
+**/*.sqlite3
 
-# Node
-node_modules/
+# =========================
+# frontend-drill-down
+# =========================
+**/node_modules/
+**/dist/
+**/tmp/
+**/out-tsc/
+**/.bazel-out/
+npm-debug.log*
+yarn-error.log*
+**/.angular/cache/
+**/.vscode/*
+**/package-lock.json
+
+# =========================
+# Env
+# =========================
+**/.env
+*.env
+
+# =========================
+# IDEs / Editors
+# =========================
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.history/*
+
+# =========================
+# Miscellaneous / Logs
+# =========================
+**/.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+testem.log
+typings/
+__screenshots__/
+
+# =========================
+# System files
+# =========================
+.DS_Store
+Thumbs.db
