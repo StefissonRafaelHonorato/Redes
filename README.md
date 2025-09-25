@@ -14,7 +14,6 @@ O backend é responsável por capturar os pacotes de rede.
 2.  **Configure o Ambiente:** No arquivo `.env` da pasta do backend, cole o seu endereço IPv4 na variável `SERVER_IP`.
 3.  **Inicie o Script:** Em um terminal, navegue até a pasta do backend e execute o comando para iniciar a captura:
     ```bash
-    # Exemplo:
     python packet_sniffer.py
     ```
     **Importante:** Deixe este terminal aberto.
