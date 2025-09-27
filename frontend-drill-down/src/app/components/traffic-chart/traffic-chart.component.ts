@@ -3,7 +3,9 @@ import { Chart, ChartConfiguration } from 'chart.js/auto';
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { TrafficService } from '../../services/traffic.service';
 import { TrafficItem } from '../../models/traffic.model';
-import { NgClass } from '@angular/common';
+import { MenuItem } from 'primeng/api';
+import { SpeedDialModule } from 'primeng/speeddial';
+import { ButtonModule } from 'primeng/button';
 
 type Period = 'minute' | 'hour' | 'day' | 'week';
 type ViewMode = Period | 'live';
@@ -11,33 +13,9 @@ type ViewMode = Period | 'live';
 @Component({
     selector: 'app-traffic-chart',
     standalone: true,
-    imports: [NgClass],
-    template: `
-    <div class="bg-gray-100 dark:bg-gray-900 min-h-screen w-full flex flex-col items-center p-4 sm:p-6 md:p-8 font-sans">
-        <div class="w-full max-w-7xl">
-            <div class="mb-6 flex flex-wrap justify-center gap-2">
-                <button (click)="switchToRealtimeView()" [ngClass]="getButtonClasses('live')">Tempo Real</button>
-                <button (click)="loadHistorical('minute')" [ngClass]="getButtonClasses('minute')">Último Minuto</button>
-                <button (click)="loadHistorical('hour')" [ngClass]="getButtonClasses('hour')">Última Hora</button>
-                <button (click)="loadHistorical('day')" [ngClass]="getButtonClasses('day')">Último Dia</button>
-                <button (click)="loadHistorical('week')" [ngClass]="getButtonClasses('week')">Última Semana</button>
-            </div>
-            <div class="flex flex-wrap -mx-3">
-                <div class="w-full lg:w-2/3 px-3 mb-6">
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 h-[500px]">
-                        <canvas #trafficChart></canvas>
-                    </div>
-                </div>
-                <div class="w-full lg:w-1/3 px-3 mb-6">
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 h-[500px]">
-                        <canvas #protocolChart></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    `,
-    styles: [`:host { display: block; font-family: 'Inter', sans-serif; }`],
+    imports: [SpeedDialModule, ButtonModule],
+    templateUrl: './traffic-chart.component.html',
+    styleUrls: ['./traffic-chart.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrafficChartComponent implements AfterViewInit, OnDestroy {
@@ -56,12 +34,18 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
     private dataSubscription?: Subscription;
     private readonly isDarkMode = signal(window.matchMedia?.('(prefers-color-scheme: dark)').matches);
 
+    public periodActions: MenuItem[] = [
+        { label: 'Tempo Real', icon: 'pi pi-bolt', command: () => this.switchToRealtimeView(), tooltip: 'Ver tráfego em tempo real' },
+        { label: 'Último Minuto', icon: 'pi pi-clock', command: () => this.loadHistorical('minute'), tooltip: 'Último minuto' },
+        { label: 'Última Hora', icon: 'pi pi-hourglass', command: () => this.loadHistorical('hour'), tooltip: 'Última hora' },
+        { label: 'Último Dia', icon: 'pi pi-calendar', command: () => this.loadHistorical('day'), tooltip: 'Último dia' },
+        { label: 'Última Semana', icon: 'pi pi-calendar-times', command: () => this.loadHistorical('week'), tooltip: 'Última semana' }
+    ];
+
     constructor() {
         effect(() => {
             const data = this.trafficData();
-            // O gráfico de protocolo mostra o consolidado dos dados recebidos
             this.updateProtocolChart(this.protocolChart(), data);
-            // O gráfico de tráfego mostra apenas os Top 10 IPs para ser legível
             this.updateTrafficChart(this.trafficChart(), data);
         });
 
@@ -74,7 +58,7 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
     ngAfterViewInit(): void {
         this.initTrafficChart();
         this.initProtocolChart();
-        this.switchToRealtimeView(); // Carga inicial em modo tempo real
+        this.switchToRealtimeView();
 
         window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', e => {
             this.isDarkMode.set(e.matches);
@@ -119,7 +103,7 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     private initTrafficChart(): void {
         const ctx = this.trafficCanvasRef.nativeElement;
-        const textColor = this.isDarkMode() ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.85)';
+        const textColor = this.isDarkMode() ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)';
 
         const chartConfig: ChartConfiguration<'bar'> = {
             type: 'bar',
@@ -146,7 +130,7 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     private initProtocolChart(): void {
         const ctx = this.protocolCanvasRef.nativeElement;
-        const textColor = this.isDarkMode() ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.85)';
+        const textColor = this.isDarkMode() ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)';
 
         const chartConfig: ChartConfiguration<'doughnut'> = {
             type: 'doughnut',
@@ -199,7 +183,7 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     private updateChartColors(chart: Chart | undefined, isDark: boolean): void {
         if (!chart) return;
-        const textColor = isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.85)';
+        const textColor = isDark ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)';
         const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
         chart.options.plugins!.title!.color = textColor;

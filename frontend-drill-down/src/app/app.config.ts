@@ -2,6 +2,8 @@ import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } fr
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { routes } from './app.routes';
+import Lara from '@primeuix/themes/lara';
+import { providePrimeNG } from 'primeng/config';
 
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 
@@ -14,6 +16,11 @@ const config: SocketIoConfig = {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    providePrimeNG({
+      theme: {
+        preset: Lara
+      }
+    }),
     provideRouter(routes),
     provideHttpClient(),
 

@@ -3,3 +3,7 @@
     height: 400px;
     width: 100%;
 }
+
+.p-speeddial .p-speeddial-item .pi {
+    font-size: 2rem;
+}
