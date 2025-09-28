@@ -1,14 +1,13 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 from app.controllers.traffic_controller import TrafficController
-from app.models.traffic_model import TrafficLog
-from app.db import cursor as db_cursor
+from app.db import get_connection
 
 bp = Blueprint('traffic', __name__)
 
+# Rota em tempo real (já depende do TrafficController)
 @bp.route('/api/traffic', methods=['GET'])
 def get_traffic():
-    # Retorna os dados em tempo real
     report = TrafficController.aggregate_traffic()
     result = [{
         "client_ip": log.client_ip,
@@ -18,6 +17,7 @@ def get_traffic():
     } for log in report]
     return jsonify({"traffic": result})
 
+# Rota de histórico
 @bp.route('/api/traffic/aggregate', methods=['GET'])
 def get_historical():
     period = request.args.get('period', 'minute')
@@ -35,21 +35,61 @@ def get_historical():
 
     since = now - delta_map[period]
 
-    db_cursor.execute(
-        "SELECT id, client_ip, inbound, outbound, protocols, created_at FROM traffic_logs WHERE created_at >= %s",
-        (since,)
-    )
-    rows = db_cursor.fetchall()
+    try:
+        # cria conexão e cursor local para cada request
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id, client_ip, inbound, outbound, protocols, created_at "
+                    "FROM traffic_logs WHERE created_at >= %s",
+                    (since,)
+                )
+                rows = cursor.fetchall()
 
-    traffic_data = []
-    for row in rows:
-        traffic_data.append({
-            "id": row[0],
-            "client_ip": row[1],
-            "inbound": row[2],
-            "outbound": row[3],
-            "protocols": row[4],
-            "timestamp": row[5].isoformat()
-        })
+        traffic_data = []
+        for row in rows:
+            traffic_data.append({
+                "id": row[0],
+                "client_ip": row[1],
+                "inbound": row[2],
+                "outbound": row[3],
+                "protocols": row[4],
+                "timestamp": row[5].isoformat()
+            })
 
-    return jsonify({"traffic": traffic_data})
+        return jsonify({"traffic": traffic_data})
+
+    except Exception as e:
+        print("Erro ao buscar histórico:", e)
+        return jsonify({"error": str(e)}), 500
+
+# Rota de protocolos de um IP específico
+@bp.route('/api/traffic/protocols/<ip>', methods=['GET'])
+def get_client_protocols(ip):
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT client_ip, inbound, outbound, protocols, created_at "
+                    "FROM traffic_logs WHERE client_ip = %s "
+                    "ORDER BY created_at DESC LIMIT 1",
+                    (ip,)
+                )
+                row = cursor.fetchone()
+
+        if not row:
+            return jsonify({"error": f"Nenhum tráfego encontrado para o IP {ip}"}), 404
+
+        result = {
+            "client_ip": row[0],
+            "inbound": row[1],
+            "outbound": row[2],
+            "protocols": row[3],
+            "timestamp": row[4].isoformat()
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Erro ao buscar protocolos do IP {ip}:", e)
+        return jsonify({"error": str(e)}), 500

@@ -28,4 +28,11 @@ export class TrafficService {
         const params = new HttpParams().set('period', period);
         return this.http.get<TrafficResponse>(`${environment.apiUrl}/traffic/aggregate`, { params });
     }
+
+    // traffic.service.ts
+    getClientProtocols(ip: string): Observable<Record<string, number>> {
+        return this.http.get<Record<string, number>>(
+            `${environment.apiUrl}/traffic/protocols/${ip}`
+        );
+    }
 }
