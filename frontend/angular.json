@@ -25,6 +25,7 @@
               }
             ],
             "styles": [
+              "primeicons/primeicons.css",
               "src/styles.css"
             ]
           },
