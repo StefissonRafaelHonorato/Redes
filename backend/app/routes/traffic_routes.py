@@ -85,11 +85,43 @@ def get_client_protocols(ip):
             "inbound": row[1],
             "outbound": row[2],
             "protocols": row[3],
-            "timestamp": row[4].isoformat()
+            "created_at": row[4].isoformat()
         }
 
         return jsonify(result)
 
     except Exception as e:
         print(f"Erro ao buscar protocolos do IP {ip}:", e)
+        return jsonify({"error": str(e)}), 500
+
+@bp.route('/api/traffic/captures/<ip>', methods=['GET'])
+def get_captures_by_ip(ip):
+    try:
+        limit = int(request.args.get('limit', 50))
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT inbound, outbound, protocols, created_at "
+                    "FROM traffic_logs WHERE client_ip = %s "
+                    "ORDER BY created_at DESC LIMIT %s",
+                    (ip, limit)
+                )
+                rows = cursor.fetchall()
+
+        if not rows:
+            return jsonify({"captures": []})
+
+        captures = []
+        for r in rows:
+            captures.append({
+                "inbound": r[0],
+                "outbound": r[1],
+                "protocols": r[2],               # assumindo JSON/JSONB
+                "created_at": r[3].isoformat()
+            })
+
+        return jsonify({"captures": captures})
+
+    except Exception as e:
+        print("Erro ao buscar captures:", e)
         return jsonify({"error": str(e)}), 500

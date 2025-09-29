@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { TrafficItem } from '../models/traffic.model';
+import { CaptureEvent, TrafficItem } from '../models/traffic.model';
 import { environment } from '../../environments/environment';
 
 interface TrafficResponse {
@@ -34,5 +34,9 @@ export class TrafficService {
         return this.http.get<Record<string, number>>(
             `${environment.apiUrl}/traffic/protocols/${ip}`
         );
+    }
+
+    getCapturesByIp(ip: string, limit = 50) {
+        return this.http.get<{ captures: CaptureEvent[] }>(`${environment.apiUrl}/traffic/captures/${ip}?limit=${limit}`);
     }
 }

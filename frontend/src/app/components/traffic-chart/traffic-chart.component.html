@@ -11,12 +11,22 @@
             <canvas #protocolChart></canvas>
         </div>
     </p-card>
-</div>
 
-<p-speedDial #sd [model]="periodActions" direction="right"
-    buttonClass="p-button-rounded p-button-lg p-button-primary shadow-lg"
-    [buttonProps]="{ severity: 'danger', rounded: true }" [radius]="80" mask
-    [tooltipOptions]="{ tooltipPosition: 'right', showDelay: 200 }" />
+    <p-card>
+        <p-speedDial #sd [model]="periodActions" direction="right"
+            buttonClass="p-button-rounded p-button-lg p-button-primary shadow-lg" [transitionDelay]="80"
+            [buttonProps]="{ severity: 'danger', rounded: true }" [radius]="80" mask
+            [tooltipOptions]="{ tooltipPosition: 'right', showDelay: 200 }">
+
+            <ng-template #button let-toggleCallback="toggleCallback">
+                <p-button outlined styleClass="border flex items-center justify-center"
+                    (click)="toggleCallback($event)">
+                    <img src="fc-barcelona.svg" alt="Barcelona" width="31" height="33" />
+                </p-button>
+            </ng-template>
+        </p-speedDial>
+    </p-card>
+</div>
 
 <p-dialog [header]="'Detalhes do IP: ' + (selectedIpData()?.client_ip || '')" [visible]="isDialogVisible()"
     (visibleChange)="isDialogVisible.set($event)" (onHide)="clearSelectedIp()" [modal]="true"
@@ -26,21 +36,24 @@
         <div class="p-fluid p-3">
             <h3 class="text-lg font-semibold mb-3 border-b pb-2">Resumo do Tráfego</h3>
             <ul class="list-none p-0 m-0 space-y-2 mb-6">
-                <li class="flex justify-between"><span>📥 Tráfego de Entrada:</span> <strong class="font-mono">{{
-                        formatBytes(data.inbound) }}</strong></li>
-                <li class="flex justify-between"><span>📤 Tráfego de Saída:</span> <strong class="font-mono">{{
-                        formatBytes(data.outbound) }}</strong></li>
-                <li class="flex justify-between border-t pt-2 mt-2"><span>🔀 Tráfego Total:</span> <strong
-                        class="font-mono">{{ formatBytes(data.inbound + data.outbound) }}</strong></li>
+                <li class="flex justify-between"><span>📥 Entrada:</span>
+                    <strong class="font-mono">{{ formatBytes(data.inbound) }}</strong>
+                </li>
+                <li class="flex justify-between"><span>📤 Saída:</span>
+                    <strong class="font-mono">{{ formatBytes(data.outbound) }}</strong>
+                </li>
+                <li class="flex justify-between border-t pt-2 mt-2"><span>🔀 Total:</span>
+                    <strong class="font-mono">{{ formatBytes(data.inbound + data.outbound) }}</strong>
+                </li>
             </ul>
 
+            <!-- Distribuição -->
             <h3 class="text-lg font-semibold mb-3 border-b pb-2">Distribuição por Protocolo</h3>
-
             <p-table [value]="getProtocolsAsArray(data.protocols)" styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
                     <tr>
                         <th>Protocolo</th>
-                        <th class="text-right">Volume de Tráfego</th>
+                        <th class="text-right">Volume</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-protocol>
@@ -51,17 +64,28 @@
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="2">Nenhum dado de protocolo encontrado para este IP.</td>
+                        <td colspan="2">Nenhum dado de protocolo encontrado.</td>
                     </tr>
                 </ng-template>
             </p-table>
 
+            <h3 class="text-lg font-semibold mb-3 border-b pb-2 mt-6">Histórico de Capturas</h3>
+            <p-timeline [value]="data.captures" align="alternate">
+                <ng-template pTemplate="content" let-event>
+                    <div>
+                        {{ formatBytes(event.inbound) }} <strong>(Inbound)</strong> / {{ formatBytes(event.outbound) }}
+                        <strong>(Outbound)</strong>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="opposite" let-event>
+                    <small class="text-gray-500">{{ event.timestamp | date:'short' }}</small>
+                </ng-template>
+            </p-timeline>
         </div>
     </ng-container>
 
     <ng-template pTemplate="footer">
-        <p-button label="Fechar" icon="pi pi-times" (click)="isDialogVisible.set(false)"
-            styleClass="p-button-text"></p-button>
+        <p-button label="Fechar" icon="pi pi-times" (click)="isDialogVisible.set(false)" styleClass="p-button-text">
+        </p-button>
     </ng-template>
-
 </p-dialog>

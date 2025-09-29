@@ -4,6 +4,7 @@ import { Chart, ChartConfiguration, ChartEvent, ActiveElement } from 'chart.js/a
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { TrafficService } from '../../services/traffic.service';
 import { TrafficItem } from '../../models/traffic.model';
+import { CaptureEvent } from '../../models/traffic.model';
 
 // --- Importações do PrimeNG ---
 import { MenuItem } from 'primeng/api';
@@ -12,6 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
+import { TimelineModule } from 'primeng/timeline';
 
 type Period = 'minute' | 'hour' | 'day' | 'week';
 type ViewMode = Period | 'live';
@@ -26,6 +28,7 @@ type ViewMode = Period | 'live';
         CardModule,        // Módulo para o p-card
         DialogModule,      // Módulo para o p-dialog
         TableModule,       // Módulo para a tabela p-table no dialog
+        TimelineModule
     ],
     templateUrl: './traffic-chart.component.html',
     styleUrls: ['./traffic-chart.component.css'],
@@ -137,14 +140,31 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     // --- Lógica do Dialog ---
     onBarClick(ip: string): void {
-        const data = this.trafficData().find(item => item.client_ip === ip);
-        if (data) {
-            this.selectedIpData.set(data);
-            this.isDialogVisible.set(true);
-        }
+        const item = this.trafficData().find(i => i.client_ip === ip);
+        if (!item) return;
+
+        this.trafficService.getCapturesByIp(ip).subscribe({
+            next: res => {
+                const rawCaptures = Array.isArray(res) ? res : (res?.captures ?? []);
+                const captures = rawCaptures.map(c => ({
+                    ...c,
+                    protocolList: Object.entries(c.protocols).map(([name, value]) => ({
+                        name,
+                        value
+                    }))
+                }));
+
+                this.selectedIpData.set({ ...item, captures });
+                this.isDialogVisible.set(true);
+            },
+            error: err => {
+                console.error('Erro ao buscar histórico de capturas:', err);
+                this.selectedIpData.set(item);
+                this.isDialogVisible.set(true);
+            }
+        });
     }
 
-    // Limpa os dados ao fechar o dialog para evitar mostrar dados antigos
     clearSelectedIp(): void {
         this.selectedIpData.set(null);
     }
