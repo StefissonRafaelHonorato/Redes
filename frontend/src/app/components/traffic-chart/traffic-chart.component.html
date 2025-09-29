@@ -47,6 +47,8 @@
                 </li>
             </ul>
 
+            <p-divider />
+
             <!-- Distribuição -->
             <h3 class="text-lg font-semibold mb-3 border-b pb-2">Distribuição por Protocolo</h3>
             <p-table [value]="getProtocolsAsArray(data.protocols)" styleClass="p-datatable-sm">
@@ -69,18 +71,40 @@
                 </ng-template>
             </p-table>
 
-            <h3 class="text-lg font-semibold mb-3 border-b pb-2 mt-6">Histórico de Capturas</h3>
-            <p-timeline [value]="data.captures" align="alternate">
-                <ng-template pTemplate="content" let-event>
-                    <div>
-                        {{ formatBytes(event.inbound) }} <strong>(Inbound)</strong> / {{ formatBytes(event.outbound) }}
-                        <strong>(Outbound)</strong>
-                    </div>
-                </ng-template>
-                <ng-template pTemplate="opposite" let-event>
-                    <small class="text-gray-500">{{ event.timestamp | date:'short' }}</small>
-                </ng-template>
-            </p-timeline>
+            <p-divider />
+
+            <!-- 🔹 Nova seção: Predição -->
+            <p-fieldset legend="Predição de Tráfego" [toggleable]="true">
+                <button pButton type="button" label="Rodar predição" icon="pi pi-chart-line"
+                    (click)="runPrediction(data.client_ip)" class="mb-3"></button>
+
+                <div *ngIf="prediction() as pred" class="mb-3">
+                    <p>📥 Probabilidade: {{ pred.probability | number:'1.0-2' }}</p>
+                    <p>Status: <strong>{{ pred.prediction }}</strong></p>
+                    <small>Timestamp previsto: {{ pred.timestamp }}</small>
+                </div>
+
+                <div *ngIf="predictionError()" class="p-text-red-600 mb-3">
+                    ⚠ {{ predictionError() }}
+                </div>
+            </p-fieldset>
+
+            <p-divider />
+
+            <p-fieldset legend="Histórico de Capturas" [toggleable]="true">
+                <p-timeline [value]="data.captures" align="alternate">
+                    <ng-template pTemplate="content" let-event>
+                        <div>
+                            {{ formatBytes(event.inbound) }} <strong>(Inbound)</strong> / {{ formatBytes(event.outbound)
+                            }}
+                            <strong>(Outbound)</strong>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="opposite" let-event>
+                        <small class="text-gray-500">{{ event.timestamp | date:'short' }}</small>
+                    </ng-template>
+                </p-timeline>
+            </p-fieldset>
         </div>
     </ng-container>
 

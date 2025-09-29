@@ -4,7 +4,7 @@ import { Chart, ChartConfiguration, ChartEvent, ActiveElement } from 'chart.js/a
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { TrafficService } from '../../services/traffic.service';
 import { TrafficItem } from '../../models/traffic.model';
-import { CaptureEvent } from '../../models/traffic.model';
+import { PredictionService } from '../../services/prediction.service';
 
 // --- Importações do PrimeNG ---
 import { MenuItem } from 'primeng/api';
@@ -14,6 +14,8 @@ import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 import { TimelineModule } from 'primeng/timeline';
+import { FieldsetModule } from 'primeng/fieldset';
+import { DividerModule } from 'primeng/divider';
 
 type Period = 'minute' | 'hour' | 'day' | 'week';
 type ViewMode = Period | 'live';
@@ -28,7 +30,9 @@ type ViewMode = Period | 'live';
         CardModule,        // Módulo para o p-card
         DialogModule,      // Módulo para o p-dialog
         TableModule,       // Módulo para a tabela p-table no dialog
-        TimelineModule
+        TimelineModule,
+        FieldsetModule,
+        DividerModule
     ],
     templateUrl: './traffic-chart.component.html',
     styleUrls: ['./traffic-chart.component.css'],
@@ -40,6 +44,7 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
     @ViewChild('protocolChart') private protocolCanvasRef!: ElementRef<HTMLCanvasElement>;
 
     private trafficService = inject(TrafficService);
+    private predictionService = inject(PredictionService);
 
     // Sinais para os gráficos e dados
     private trafficChart = signal<Chart | undefined>(undefined);
@@ -138,6 +143,47 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
         });
     }
 
+    prediction = signal<any>(null);
+    predictionError = signal<string | null>(null);
+    predictionHistory = signal<any[]>([]);
+    runPrediction(clientIp: string) {
+        this.predictionService.runPrediction({ client_ip: clientIp, features: {} })
+            .subscribe({
+                next: () => this.loadPredictionsFromDb(clientIp),
+                error: (err) => {
+                    console.error('Erro ao rodar predição:', err);
+                    this.predictionError.set('Erro ao executar a predição');
+                }
+            });
+    }
+
+    loadPredictionsFromDb(clientIp: string) {
+        this.predictionService.getPredictionByIp(clientIp).subscribe({
+            next: res => {
+                if (!res || (Array.isArray(res) && res.length === 0)) {
+                    this.predictionHistory.set([]);
+                    this.prediction.set(null);
+                    this.predictionError.set(`Nenhuma predição encontrada para o IP ${clientIp}`);
+                    return;
+                }
+
+                this.predictionError.set(null);
+
+                if (Array.isArray(res)) {
+                    this.predictionHistory.set(res);
+                    this.prediction.set(res[0]);
+                } else {
+                    this.predictionHistory.set([res]);
+                    this.prediction.set(res);
+                }
+            },
+            error: err => {
+                console.error('Erro ao buscar predições do banco:', err);
+                this.predictionError.set('Erro ao buscar predições do banco');
+            }
+        });
+    }
+
     // --- Lógica do Dialog ---
     onBarClick(ip: string): void {
         const item = this.trafficData().find(i => i.client_ip === ip);
@@ -156,6 +202,7 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
                 this.selectedIpData.set({ ...item, captures });
                 this.isDialogVisible.set(true);
+                this.loadPredictionsFromDb(ip)
             },
             error: err => {
                 console.error('Erro ao buscar histórico de capturas:', err);
