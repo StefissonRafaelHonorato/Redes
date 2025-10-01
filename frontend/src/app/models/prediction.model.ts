@@ -17,3 +17,11 @@ export interface PredictionResponse {
     historical: HistoricalItem[];
     prediction: PredictionItem;
 }
+
+export interface ForecastResult {
+    client_ip: string;
+    forecast_timestamp: string;
+    predicted_inbound_size: number;
+    unit: string;
+    model_used: string;
+}

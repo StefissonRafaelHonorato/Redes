@@ -5,6 +5,7 @@ import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { TrafficService } from '../../services/traffic.service';
 import { TrafficItem } from '../../models/traffic.model';
 import { PredictionService } from '../../services/prediction.service';
+import { FormsModule } from '@angular/forms';
 
 // --- Importações do PrimeNG ---
 import { MenuItem } from 'primeng/api';
@@ -16,9 +17,21 @@ import { TableModule } from 'primeng/table';
 import { TimelineModule } from 'primeng/timeline';
 import { FieldsetModule } from 'primeng/fieldset';
 import { DividerModule } from 'primeng/divider';
+import { TagModule } from 'primeng/tag';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { TabsModule } from 'primeng/tabs';
+import { KnobModule } from 'primeng/knob';
 
 type Period = 'minute' | 'hour' | 'day' | 'week';
 type ViewMode = Period | 'live';
+
+interface ForecastResult {
+    client_ip: string;
+    forecast_timestamp: string;
+    predicted_inbound_size: number;
+    unit: string;
+    model_used: string;
+}
 
 @Component({
     selector: 'app-traffic-chart',
@@ -32,7 +45,12 @@ type ViewMode = Period | 'live';
         TableModule,       // Módulo para a tabela p-table no dialog
         TimelineModule,
         FieldsetModule,
-        DividerModule
+        DividerModule,
+        TagModule,
+        ProgressBarModule,
+        TabsModule,
+        KnobModule,
+        FormsModule
     ],
     templateUrl: './traffic-chart.component.html',
     styleUrls: ['./traffic-chart.component.css'],
@@ -64,6 +82,10 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     public isLoading = signal(true);
     public isPredictionLoading = signal(false);
+
+    public forecast = signal<ForecastResult | null>(null);
+    public isForecastLoading = signal(false);
+    public forecastError = signal<string | null>(null);
 
     public periodActions: MenuItem[] = [
         { label: 'Tempo Real', icon: 'pi pi-bolt', command: () => this.updateSelectedPeriod('live'), tooltip: 'Ver tráfego em tempo real' },
@@ -241,6 +263,11 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     clearSelectedIp(): void {
         this.selectedIpData.set(null);
+
+        this.prediction.set(null);
+        this.predictionError.set(null);
+        this.forecast.set(null);
+        this.forecastError.set(null);
     }
 
     // Converte o objeto de protocolos em um array para usar na p-table
@@ -394,5 +421,35 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
         const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
+
+    public predictionStatusSeverity(prediction: 'suspeito' | 'normal'): 'danger' | 'success' {
+        return prediction === 'suspeito' ? 'danger' : 'success';
+    }
+
+    public probabilityPercentage(probability: number): number {
+        if (typeof probability !== 'number') {
+            return 0;
+        }
+        return probability * 100;
+    }
+
+    runForecast(clientIp: string): void {
+        this.isForecastLoading.set(true);
+        this.forecastError.set(null);
+        this.forecast.set(null); // Limpa o resultado anterior
+
+        // Substitua pelo seu serviço real de forecast
+        this.predictionService.runForecastArima({ client_ip: clientIp }).subscribe({
+            next: (res: ForecastResult) => {
+                this.forecast.set(res);
+                this.isForecastLoading.set(false);
+            },
+            error: (err) => {
+                console.error('Erro ao rodar forecast:', err);
+                this.forecastError.set('Não foi possível gerar a previsão futura.');
+                this.isForecastLoading.set(false);
+            }
+        });
     }
 }

@@ -10,114 +10,189 @@
         </div>
     </p-card>
 
+    <p-speedDial #sd [model]="periodActions" direction="right"
+        buttonClass="p-button-rounded p-button-lg p-button-primary shadow-lg" [transitionDelay]="80"
+        [buttonProps]="{ severity: 'danger', rounded: true }" [radius]="80" mask
+        [tooltipOptions]="{ tooltipPosition: 'right', showDelay: 200 }">
+
+        <ng-template #button let-toggleCallback="toggleCallback">
+            <p-button outlined styleClass="border flex items-center justify-center" (click)="toggleCallback($event)">
+                <img src="placa-rede.png" alt="Barcelona" width="31" height="33" />
+            </p-button>
+        </ng-template>
+    </p-speedDial>
+
     <p-card header="Distribuição Geral por Protocolo" styleClass="shadow-lg rounded-lg">
         <div class="relative h-[450px]">
             <canvas #protocolChart></canvas>
         </div>
     </p-card>
-
-    <p-card>
-        <p-speedDial #sd [model]="periodActions" direction="right"
-            buttonClass="p-button-rounded p-button-lg p-button-primary shadow-lg" [transitionDelay]="80"
-            [buttonProps]="{ severity: 'danger', rounded: true }" [radius]="80" mask
-            [tooltipOptions]="{ tooltipPosition: 'right', showDelay: 200 }">
-
-            <ng-template #button let-toggleCallback="toggleCallback">
-                <p-button outlined styleClass="border flex items-center justify-center"
-                    (click)="toggleCallback($event)">
-                    <img src="fc-barcelona.svg" alt="Barcelona" width="31" height="33" />
-                </p-button>
-            </ng-template>
-        </p-speedDial>
-    </p-card>
 </div>
 
 <p-dialog [header]="'Detalhes do IP: ' + (selectedIpData()?.client_ip || '')" [visible]="isDialogVisible()"
     (visibleChange)="isDialogVisible.set($event)" (onHide)="clearSelectedIp()" [modal]="true"
-    [style]="{ width: '50vw', minWidth: '350px' }" [draggable]="false">
+    [style]="{ width: '60vw', minWidth: '380px' }" [draggable]="false">
 
     <ng-container *ngIf="selectedIpData() as data">
-        <div class="p-fluid p-3">
-            <h3 class="text-lg font-semibold mb-3 border-b pb-2">Resumo do Tráfego</h3>
-            <ul class="list-none p-0 m-0 space-y-2 mb-6">
-                <li class="flex justify-between"><span>📥 Entrada:</span>
-                    <strong class="font-mono">{{ formatBytes(data.inbound) }}</strong>
-                </li>
-                <li class="flex justify-between"><span>📤 Saída:</span>
-                    <strong class="font-mono">{{ formatBytes(data.outbound) }}</strong>
-                </li>
-                <li class="flex justify-between border-t pt-2 mt-2"><span>🔀 Total:</span>
-                    <strong class="font-mono">{{ formatBytes(data.inbound + data.outbound) }}</strong>
-                </li>
-            </ul>
 
-            <p-divider />
-
-            <!-- Distribuição -->
-            <h3 class="text-lg font-semibold mb-3 border-b pb-2">Distribuição por Protocolo</h3>
-            <p-table [value]="getProtocolsAsArray(data.protocols)" styleClass="p-datatable-sm">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Protocolo</th>
-                        <th class="text-right">Volume</th>
-                    </tr>
+        <p-tabs value="0" scrollable>
+            <p-tablist class="justify-center">
+                <ng-template #previcon>
+                    <i class="pi pi-minus"></i>
                 </ng-template>
-                <ng-template pTemplate="body" let-protocol>
-                    <tr>
-                        <td>{{ protocol.name }}</td>
-                        <td class="text-right font-mono">{{ formatBytes(protocol.value) }}</td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="2">Nenhum dado de protocolo encontrado.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+                <p-tab value="0" class="flex items-center !gap-2">
+                    Resumo do Tráfego
+                </p-tab>
+                <p-tab value="1" class="flex items-center !gap-2">
+                    Análise de Risco
+                </p-tab>
+                <p-tab value="2" class="flex items-center !gap-2">
+                    Previsão Futura
+                </p-tab>
+            </p-tablist>
+            <p-tabpanels>
 
-            <p-divider />
+                <p-tabpanel value="0">
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold mb-3 border-b pb-2">Resumo Geral</h3>
+                        <ul class="list-none p-0 m-0 space-y-2 mb-6">
+                            <li class="flex justify-between"><span>📥 Entrada:</span>
+                                <strong class="font-mono">{{ formatBytes(data.inbound) }}</strong>
+                            </li>
+                            <li class="flex justify-between"><span>📤 Saída:</span>
+                                <strong class="font-mono">{{ formatBytes(data.outbound) }}</strong>
+                            </li>
+                            <li class="flex justify-between border-t pt-2 mt-2"><span>🔀 Total:</span>
+                                <strong class="font-mono">{{ formatBytes(data.inbound + data.outbound) }}</strong>
+                            </li>
+                        </ul>
 
-            <!-- 🔹 Nova seção: Predição -->
-            <p-fieldset legend="Predição de Tráfego" [toggleable]="true">
-                <button pButton type="button" label="Rodar predição" icon="pi pi-chart-line"
-                    (click)="runPrediction(data.client_ip)" class="mb-3" [disabled]="isPredictionLoading()"></button>
+                        <p-divider />
 
-                <div *ngIf="isPredictionLoading()" class="flex justify-center items-center mb-3">
-                    <i class="pi pi-spin pi-spinner text-xl"></i> Rodando predição...
-                </div>
+                        <h3 class="text-lg font-semibold mb-3 border-b pb-2">Distribuição por Protocolo</h3>
 
-                <div *ngIf="prediction() as pred" class="mb-3">
-                    <p>📥 Probabilidade: {{ pred.probability | number:'1.0-2' }}</p>
-                    <p>Status: <strong>{{ pred.prediction }}</strong></p>
-                    <small>Timestamp previsto: {{ pred.timestamp }}</small>
-                </div>
+                        <p-table [value]="getProtocolsAsArray(data.protocols)" styleClass="p-datatable-sm">
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Protocolo</th>
+                                    <th class="text-right">Volume</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-protocol>
+                                <tr>
+                                    <td>{{ protocol.name }}</td>
+                                    <td class="text-right font-mono">{{ formatBytes(protocol.value) }}</td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="2">Nenhum dado de protocolo encontrado.</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+                </p-tabpanel>
 
-                <div *ngIf="predictionError()" class="p-text-red-600 mb-3">
-                    ⚠ {{ predictionError() }}
-                </div>
-            </p-fieldset>
+                <p-tabpanel value="1">
+                    <div class="p-4">
+                        <p-fieldset legend="Classificação de Anomalia" [toggleable]="true" class="relative">
+                            <div class="absolute top-3 right-3">
+                                <i class="pi pi-info-circle text-gray-500 text-lg"
+                                    pTooltip="A análise classifica a conexão como 'Normal' ou 'Suspeita' com base em desvios estatísticos do comportamento histórico."
+                                    tooltipPosition="left"></i>
+                            </div>
 
-            <p-divider />
+                            <div *ngIf="isPredictionLoading()"
+                                class="absolute inset-0 bg-white bg-opacity-80 flex flex-col justify-center items-center z-10 rounded-md">
+                                <i class="pi pi-spin pi-spinner text-3xl mb-2"></i>
+                                <span>Analisando...</span>
+                            </div>
 
-            <p-fieldset legend="Histórico de Capturas" [toggleable]="true">
-                <p-timeline [value]="data.captures" align="alternate">
-                    <ng-template pTemplate="content" let-event>
-                        <div>
-                            {{ formatBytes(event.inbound) }} <strong>(Inbound)</strong> / {{ formatBytes(event.outbound)
-                            }}
-                            <strong>(Outbound)</strong>
+                            <div *ngIf="prediction() as pred; else noPrediction">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-bold text-lg">Status:</span>
+                                    <p-tag [value]="pred.prediction.toUpperCase()"
+                                        [severity]="predictionStatusSeverity(pred.prediction)">
+                                    </p-tag>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="font-bold text-lg block mb-2">Score de Anomalia</label>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm font-medium text-green-600">Normal</span>
+                                        <p-progressBar [value]="probabilityPercentage(pred.probability)"
+                                            [showValue]="false" class="flex-grow h-4"></p-progressBar>
+                                        <span class="text-sm font-medium text-red-600">Anômalo</span>
+                                    </div>
+                                    <div class="text-center mt-2 text-gray-700 font-semibold">
+                                        Score: {{ pred.probability | number:'1.2-2' }}
+                                    </div>
+                                </div>
+
+                                <div class="text-sm text-gray-500 text-center">
+                                    <strong>Análise de:</strong> {{ pred.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}
+                                </div>
+                            </div>
+
+                            <ng-template #noPrediction>
+                                <div *ngIf="predictionError()" class="p-message p-message-error mb-3">
+                                    ⚠ {{ predictionError() }}
+                                </div>
+                                <p class="text-center text-gray-600 mb-3">
+                                    Clique no botão para executar uma análise de anomalia neste IP.
+                                </p>
+                                <button pButton type="button" label="Rodar Análise de Risco" icon="pi pi-shield"
+                                    (click)="runPrediction(data.client_ip)" class="w-full p-3"
+                                    [disabled]="isPredictionLoading()">
+                                </button>
+                            </ng-template>
+                        </p-fieldset>
+                    </div>
+                </p-tabpanel>
+
+                <p-tabpanel value="2">
+                    <div class="relative p-4 text-center">
+                        <div *ngIf="isForecastLoading()"
+                            class="absolute inset-0 bg-white bg-opacity-80 flex flex-col justify-center items-center z-10 rounded-md">
+                            <i class="pi pi-spin pi-spinner text-3xl mb-2"></i>
+                            <span>Calculando previsão...</span>
                         </div>
-                    </ng-template>
-                    <ng-template pTemplate="opposite" let-event>
-                        <small class="text-gray-500">{{ event.timestamp | date:'short' }}</small>
-                    </ng-template>
-                </p-timeline>
-            </p-fieldset>
-        </div>
+
+                        <div *ngIf="forecast() as fc; else noForecast">
+                            <h3 class="text-lg font-semibold mb-2">Tamanho Previsto do Próximo Pacote</h3>
+                            <div class="my-4">
+                                <p-knob [(ngModel)]="fc.predicted_inbound_size" [readonly]="true"
+                                    [max]="fc.predicted_inbound_size * 2" [size]="150" [strokeWidth]="5"
+                                    [valueTemplate]="(fc.predicted_inbound_size | number:'1.0-0') || ''">
+                                </p-knob>
+                            </div>
+                            <p-tag *ngIf="fc.unit" severity="info"
+                                [value]="formatBytes(fc.predicted_inbound_size)"></p-tag>
+                            <p class="text-sm text-gray-500 mt-4">
+                                Modelo utilizado: <strong>{{ fc.model_used }}</strong>
+                            </p>
+                        </div>
+
+                        <ng-template #noForecast>
+                            <div *ngIf="forecastError()" class="p-message p-message-error mb-3">
+                                ⚠ {{ forecastError() }}
+                            </div>
+                            <p class="text-center text-gray-600 mb-4">
+                                Calcule o tamanho estimado do próximo fluxo de dados de entrada (inbound) para este IP.
+                            </p>
+                            <button pButton type="button" label="Gerar Previsão Numérica" icon="pi pi-forward"
+                                (click)="runForecast(data.client_ip)" class="w-full p-3 p-button-success"
+                                [disabled]="isForecastLoading()">
+                            </button>
+                        </ng-template>
+                    </div>
+                </p-tabpanel>
+            </p-tabpanels>
+        </p-tabs>
     </ng-container>
 
     <ng-template pTemplate="footer">
-        <p-button label="Fechar" icon="pi pi-times" (click)="isDialogVisible.set(false)" styleClass="p-button-text">
-        </p-button>
+        <p-button label="Fechar" icon="pi pi-times" (click)="isDialogVisible.set(false)"
+            styleClass="p-button-text"></p-button>
     </ng-template>
 </p-dialog>
