@@ -5,6 +5,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
 import Lara from '@primeuix/themes/lara';
 import { providePrimeNG } from 'primeng/config';
+import { TabsModule } from 'primeng/tabs';
 
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 
@@ -27,6 +28,9 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
 
     // Adicione o provider do Socket.IO aqui
-    importProvidersFrom(SocketIoModule.forRoot(config))
+    importProvidersFrom(
+      SocketIoModule.forRoot(config),
+      TabsModule
+    )
   ]
 };

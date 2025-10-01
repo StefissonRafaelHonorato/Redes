@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { PredictionResponse } from '../models/prediction.model';
+import { ForecastResult, PredictionResponse } from '../models/prediction.model';
 
 @Injectable({ providedIn: 'root' })
 export class PredictionService {
@@ -36,6 +36,23 @@ export class PredictionService {
     runPrediction(payload: { client_ip: string; features: any }): Observable<PredictionResponse> {
         return this.http.post<PredictionResponse>(
             `${environment.apiUrl}/prediction/run`,
+            payload
+        );
+    }
+
+    runForecast(payload: { client_ip: string }): Observable<ForecastResult> {
+        return this.http.post<ForecastResult>(
+            `${environment.apiUrl}/prediction/forecast`,
+            payload
+        );
+    }
+
+    /**
+     * Executar a previsão de tráfego futuro (forecast) usando o modelo ARIMA.
+     */
+    runForecastArima(payload: { client_ip: string }): Observable<ForecastResult> {
+        return this.http.post<ForecastResult>(
+            `${environment.apiUrl}/prediction/forecast-arima`,
             payload
         );
     }
