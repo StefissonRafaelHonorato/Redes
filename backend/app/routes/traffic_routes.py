@@ -8,7 +8,7 @@ bp = Blueprint('traffic', __name__)
 # Rota em tempo real (já depende do TrafficController)
 @bp.route('/api/traffic', methods=['GET'])
 def get_traffic():
-    report = TrafficController.aggregate_traffic()
+    report = TrafficController.aggregate_realtime()
     result = [{
         "client_ip": log.client_ip,
         "inbound": log.inbound,

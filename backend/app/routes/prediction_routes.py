@@ -20,7 +20,7 @@ def get_predictions():
                     (limit,)
                 )
                 rows = cursor.fetchall()
-
+ 
         predictions = [
             {
                 "client_ip": row[0],
@@ -75,15 +75,8 @@ def run_prediction():
     try:
         data = request.json
         client_ip = data.get("client_ip")
-        features = data.get("features", {})
-
         if not client_ip:
-            # pegar o primeiro IP do traffic_logs ou outro critério
-            cursor.execute("SELECT DISTINCT client_ip FROM traffic_logs LIMIT 1")
-            row_ip = cursor.fetchone()
-            if not row_ip:
-                return jsonify({"error": "Não há IPs para rodar predição"}), 404
-            client_ip = row_ip[0]
+            return jsonify({"error": "No client IP available"}), 404
 
         # exemplo: vamos usar o histórico do IP para treinar regressão
         with get_connection() as conn:
@@ -97,7 +90,7 @@ def run_prediction():
                 rows = cursor.fetchall()
 
         if not rows:
-            return jsonify({"error": f"Nenhum dado para previsão do IP {client_ip}"}), 404
+            return jsonify({"error": f"Nenhum dado para previsão do IP"}), 404
 
         inbound = [r[0] for r in rows][::-1]
         outbound = [r[1] for r in rows][::-1]
