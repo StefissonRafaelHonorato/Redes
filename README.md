@@ -79,6 +79,22 @@ O backend é responsável por capturar os pacotes de rede.
 
 ---
 
+### Passo 4: Executar Testes do Backend
+
+O backend possui testes unitários para verificar a captura e o processamento de pacotes.
+
+1. Rode os testes:  
+    ```bash
+    pytest tests/
+    ```
+
+2. Para ver detalhes mais verbosos:  
+    ```bash
+    pytest -v tests/
+    ```
+
+---
+
 ## 2. Frontend (Interface Visual)
 
 O frontend exibe os dados capturados pelo backend.
@@ -108,6 +124,22 @@ http://localhost:4200/
 
 A aplicação recarregará automaticamente se você alterar os arquivos.
 
+### Passo 5: Executar Testes do Frontend
+
+O frontend possui testes unitários com Jest ou Karma + Jasmine (dependendo do setup do Angular).
+
+Rodar testes com Angular CLI:
+```bash
+ng test
+```
+
+Para rodar testes de cobertura:
+```bash
+ng test --code-coverage
+```
+
+Os resultados aparecerão no terminal e/ou abrirão uma janela do navegador mostrando os testes.
+
 ## 3. Observações Adicionais
 
 Requisitos do Python:
@@ -125,3 +157,31 @@ Requisitos do Frontend:
 Ambiente de Desenvolvimento:
 
 É recomendável rodar backend e frontend em terminais separados para facilitar o desenvolvimento.
+
+## 4. Estrutura de Pastas
+
+O projeto é organizado da seguinte forma, separando claramente o backend e o frontend, com suas respectivas subpastas de responsabilidades:
+
+```
+Redes/
+├── backend/                    # Código-fonte do backend (Python)
+│   ├── app/                    # Módulos e lógica principal da aplicação
+│   │   ├── controllers/      # Controladores (lógica de requisição/resposta)
+│   │   ├── models/           # Modelos de dados e lógica de negócios
+│   │   ├── routes/           # Definição das rotas da API
+│   │   └── services/         # Serviços de negócio ou lógica de acesso a dados
+│   ├── tests/                  # Testes unitários do backend (pytest)
+│   └── run.py                  # Script principal para iniciar o servidor backend
+│
+└── frontend/                   # Código-fonte do frontend (Angular)
+    ├── src/                    # Arquivos-fonte da aplicação Angular
+    │   └── app/                # Módulo principal da aplicação
+    │       ├── components/     # Componentes reutilizáveis da UI
+    │       ├── models/         # Modelos/interfaces de dados do frontend
+    │       └── services/       # Serviços (chamadas API, lógica de estado)
+    ├── angular.json            # Arquivo de configuração do Angular CLI
+    └── package.json            # Dependências e scripts do frontend (npm/yarn)
+```
+
+- **`backend/`**: Contém toda a lógica do servidor, responsável pela captura e processamento de pacotes de rede.
+- **`frontend/`**: Contém a aplicação de interface do usuário desenvolvida com Angular, responsável por exibir os dados ao usuário.
