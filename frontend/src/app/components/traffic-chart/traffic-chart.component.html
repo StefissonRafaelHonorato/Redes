@@ -1,4 +1,8 @@
+<div *ngIf="isLoading()" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+    <i class="pi pi-spin pi-spinner text-5xl text-white"></i>
+</div>
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 p-4">
+    <h1 class="text-lg font-semibold mb-4">{{ selectedPeriodLabel }}</h1>
 
     <p-card header="Top 10 IPs por Volume de Tráfego" styleClass="col-span-1 xl:col-span-2 shadow-lg rounded-lg">
         <div class="relative h-[450px]">
@@ -76,7 +80,11 @@
             <!-- 🔹 Nova seção: Predição -->
             <p-fieldset legend="Predição de Tráfego" [toggleable]="true">
                 <button pButton type="button" label="Rodar predição" icon="pi pi-chart-line"
-                    (click)="runPrediction(data.client_ip)" class="mb-3"></button>
+                    (click)="runPrediction(data.client_ip)" class="mb-3" [disabled]="isPredictionLoading()"></button>
+
+                <div *ngIf="isPredictionLoading()" class="flex justify-center items-center mb-3">
+                    <i class="pi pi-spin pi-spinner text-xl"></i> Rodando predição...
+                </div>
 
                 <div *ngIf="prediction() as pred" class="mb-3">
                     <p>📥 Probabilidade: {{ pred.probability | number:'1.0-2' }}</p>

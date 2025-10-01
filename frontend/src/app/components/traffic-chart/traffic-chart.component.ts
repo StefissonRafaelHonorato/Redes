@@ -57,41 +57,47 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     public activeView = signal<ViewMode>('live');
 
+    selectedPeriodLabel: string = 'Últimos 5 segundos';
+
     private dataSubscription?: Subscription;
     private readonly isDarkMode = signal(window.matchMedia?.('(prefers-color-scheme: dark)').matches);
 
+    public isLoading = signal(true);
+    public isPredictionLoading = signal(false);
+
     public periodActions: MenuItem[] = [
-        {
-            label: 'Tempo Real',
-            icon: 'pi pi-bolt',
-            command: () => this.switchToRealtimeView(),
-            tooltip: 'Ver tráfego em tempo real'
-        },
-        {
-            label: 'Último Minuto',
-            icon: 'pi pi-clock',
-            command: () => this.loadHistorical('minute'),
-            tooltip: 'Filtrar por último minuto'
-        },
-        {
-            label: 'Última Hora',
-            icon: 'pi pi-hourglass',
-            command: () => this.loadHistorical('hour'),
-            tooltip: 'Filtrar por última hora'
-        },
-        {
-            label: 'Último Dia',
-            icon: 'pi pi-calendar',
-            command: () => this.loadHistorical('day'),
-            tooltip: 'Filtrar por último dia'
-        },
-        {
-            label: 'Última Semana',
-            icon: 'pi pi-calendar-times',
-            command: () => this.loadHistorical('week'),
-            tooltip: 'Filtrar por última semana'
-        }
+        { label: 'Tempo Real', icon: 'pi pi-bolt', command: () => this.updateSelectedPeriod('live'), tooltip: 'Ver tráfego em tempo real' },
+        { label: 'Último Minuto', icon: 'pi pi-clock', command: () => this.updateSelectedPeriod('minute'), tooltip: 'Filtrar por último minuto' },
+        { label: 'Última Hora', icon: 'pi pi-hourglass', command: () => this.updateSelectedPeriod('hour'), tooltip: 'Filtrar por última hora' },
+        { label: 'Último Dia', icon: 'pi pi-calendar', command: () => this.updateSelectedPeriod('day'), tooltip: 'Filtrar por último dia' },
+        { label: 'Última Semana', icon: 'pi pi-calendar-times', command: () => this.updateSelectedPeriod('week'), tooltip: 'Filtrar por última semana' }
     ];
+
+
+    updateSelectedPeriod(period: Period | 'live') {
+        switch (period) {
+            case 'live':
+                this.selectedPeriodLabel = 'Tempo Real';
+                this.switchToRealtimeView();
+                break;
+            case 'minute':
+                this.selectedPeriodLabel = 'Último Minuto';
+                this.loadHistorical('minute');
+                break;
+            case 'hour':
+                this.selectedPeriodLabel = 'Última Hora';
+                this.loadHistorical('hour');
+                break;
+            case 'day':
+                this.selectedPeriodLabel = 'Último Dia';
+                this.loadHistorical('day');
+                break;
+            case 'week':
+                this.selectedPeriodLabel = 'Última Semana';
+                this.loadHistorical('week');
+                break;
+        }
+    }
 
     constructor() {
         effect(() => {
@@ -124,22 +130,38 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
 
     switchToRealtimeView(): void {
         this.activeView.set('live');
+        this.isLoading.set(true); // inicia loader
         this.dataSubscription?.unsubscribe();
+
         this.dataSubscription = interval(5000).pipe(
             startWith(0),
             switchMap(() => this.trafficService.getTraffic())
         ).subscribe({
-            next: res => this.trafficData.set(res.traffic),
-            error: err => console.error('Erro na busca em tempo real:', err)
+            next: res => {
+                this.trafficData.set(res.traffic);
+                this.isLoading.set(false); // termina loader
+            },
+            error: err => {
+                console.error('Erro na busca em tempo real:', err);
+                this.isLoading.set(false); // termina loader mesmo em erro
+            }
         });
     }
 
     loadHistorical(period: Period): void {
         this.activeView.set(period);
+        this.isLoading.set(true); // inicia loader
         this.dataSubscription?.unsubscribe();
+
         this.dataSubscription = this.trafficService.getHistoricalTraffic(period).subscribe({
-            next: res => this.trafficData.set(res.traffic),
-            error: err => console.error('Erro ao buscar histórico:', err)
+            next: res => {
+                this.trafficData.set(res.traffic);
+                this.isLoading.set(false); // termina loader
+            },
+            error: err => {
+                console.error('Erro ao buscar histórico:', err);
+                this.isLoading.set(false); // termina loader mesmo em erro
+            }
         });
     }
 
@@ -147,12 +169,17 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
     predictionError = signal<string | null>(null);
     predictionHistory = signal<any[]>([]);
     runPrediction(clientIp: string) {
+        this.isPredictionLoading.set(true); // inicia loader de predição
         this.predictionService.runPrediction({ client_ip: clientIp, features: {} })
             .subscribe({
-                next: () => this.loadPredictionsFromDb(clientIp),
+                next: () => {
+                    this.loadPredictionsFromDb(clientIp);
+                    this.isPredictionLoading.set(false); // termina loader
+                },
                 error: (err) => {
                     console.error('Erro ao rodar predição:', err);
                     this.predictionError.set('Erro ao executar a predição');
+                    this.isPredictionLoading.set(false); // termina loader
                 }
             });
     }
