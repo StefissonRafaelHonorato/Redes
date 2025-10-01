@@ -90,6 +90,20 @@
                                 </tr>
                             </ng-template>
                         </p-table>
+                        <p-fieldset legend="Histórico de Capturas" [toggleable]="true">
+                            <p-timeline [value]="data.captures" align="alternate">
+                                <ng-template pTemplate="content" let-event>
+                                    <div>
+                                        {{ formatBytes(event.inbound) }} <strong>(Inbound)</strong> / {{ formatBytes(event.outbound)
+                                        }}
+                                        <strong>(Outbound)</strong>
+                                    </div>
+                                </ng-template>
+                                <ng-template pTemplate="opposite" let-event>
+                                    <small class="text-gray-500">{{ event.timestamp | date:'short' }}</small>
+                                </ng-template>
+                            </p-timeline>
+                        </p-fieldset>
                     </div>
                 </p-tabpanel>
 

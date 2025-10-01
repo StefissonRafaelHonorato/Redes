@@ -15,6 +15,39 @@ Antes de começar, garanta que você tenha os seguintes softwares instalados na 
     -   [**Faça o download aqui**](https://www.python.org/downloads/release/python-3118/)
 
 
+---
+## ⚡ Dependências do Capturador de Pacotes
+
+O backend utiliza o **Scapy** para capturar pacotes de rede.  
+Para que isso funcione corretamente, é necessário instalar manualmente uma biblioteca do sistema operacional:
+
+### 🔹 Windows
+1. Baixe e instale o [Npcap](https://nmap.org/npcap/).
+2. Durante a instalação, **ative a opção**:
+- Install Npcap in WinPcap API-compatible Mode
+3. Reinicie o computador após a instalação (recomendado).
+
+### 🔹 Linux (Debian/Ubuntu)
+No Linux, o suporte vem da biblioteca `libpcap`. Instale com:
+```bash
+sudo apt-get update
+sudo apt-get install libpcap-dev
+```
+
+### 🔹 macOS
+
+No macOS, o libpcap já vem instalado por padrão. Se precisar reinstalar:
+```bash
+brew install libpcap
+```
+
+⚠️ Importante: sem essas dependências, o Scapy exibirá erros como:
+```bash
+WARNING: No libpcap provider available ! pcap won't be used
+RuntimeError: Sniffing and sending packets is not available at layer 2: winpcap is not installed
+```
+
+---
 ## 1. Backend (Captura de Dados)
 
 O backend é responsável por capturar os pacotes de rede.
@@ -138,11 +171,16 @@ Se for a primeira vez rodando o projeto:
     npm install
 ```
 
-### Passo 3: Iniciar a Aplicação Angular
+### Passo 3: Instalar o Angular CLI globalmente (Se Ainda não tiver instalado):
+```bash
+npm install -g @angular/cli
+```
+
+### Passo 4: Iniciar a Aplicação Angular
 ```bash
     ng serve
 ```
-### Passo 4: Acessar no Navegador
+### Passo 5: Acessar no Navegador
 
 Abra o navegador e acesse:
 
