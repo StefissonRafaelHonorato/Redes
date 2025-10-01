@@ -331,6 +331,16 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
                     const ip = this.trafficChart()!.data.labels![index] as string;
                     this.onBarClick(ip);
                 },
+                onHover: (event: ChartEvent, elements: ActiveElement[]) => {
+                    const target = event.native ? event.native.target as HTMLCanvasElement : null;
+                    if (!target) return;
+
+                    if (elements.length) {
+                        target.style.cursor = 'pointer';
+                    } else {
+                        target.style.cursor = 'default';
+                    }
+                }
             },
         };
         this.trafficChart.set(new Chart(ctx, chartConfig));

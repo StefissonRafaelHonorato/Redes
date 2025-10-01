@@ -23,11 +23,6 @@ export class TopMenuComponent {
                 label: 'Capturas',
                 icon: 'pi pi-fw pi-chart-line',
                 command: () => this.router.navigate(['/chart'])
-            },
-            {
-                label: 'Como funciona',
-                icon: 'pi pi-fw pi-lightbulb',
-                command: () => this.router.navigate(['/network'])
             }
         ];
     }

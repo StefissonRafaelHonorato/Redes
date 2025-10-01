@@ -4,13 +4,13 @@ from datetime import datetime
 def test_get_predictions_success(client, mock_db):
     mock_cursor, _ = mock_db
     mock_cursor.fetchall.return_value = [
-        ("192.168.0.1", "normal", 0.95, datetime.utcnow())
+        ("51.116.246.105", "normal", 0.95, datetime.utcnow())
     ]
 
     response = client.get("/api/prediction?limit=5")
     assert response.status_code == 200
     data = response.get_json()
-    assert data[0]["client_ip"] == "192.168.0.1"
+    assert data[0]["client_ip"] == "51.116.246.105"
     assert isinstance(data[0]["probability"], float)
 
 
@@ -53,6 +53,6 @@ def test_run_prediction_success(client, mock_db):
 
 def test_run_prediction_no_ip_available(client):
     response = client.post("/api/prediction/run", json={})
-    assert response.status_code == 404
+    assert response.status_code == 400
     data = response.get_json()
     assert "No client IP available" in data["error"]

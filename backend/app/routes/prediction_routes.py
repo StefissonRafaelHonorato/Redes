@@ -78,7 +78,7 @@ def run_prediction():
         data = request.json
         client_ip = data.get("client_ip")
         if not client_ip:
-            return jsonify({"error": "No client IP provided"}), 400
+            return jsonify({"error": "No client IP available"}), 400
 
         with get_connection() as conn:
             with conn.cursor() as cursor:

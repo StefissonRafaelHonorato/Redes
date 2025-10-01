@@ -7,6 +7,13 @@ Este guia mostra como configurar e executar o **backend** (captura de pacotes) e
 Siga os passos abaixo para rodar o projeto localmente.
 
 ---
+## Pré-requisitos
+
+Antes de começar, garanta que você tenha os seguintes softwares instalados na sua máquina:
+
+-   **Python 3.11**: Esta é a versão recomendada e testada para o backend. Versões mais recentes (como 3.12+) podem causar erros de incompatibilidade com as dependências.
+    -   [**Faça o download aqui**](https://www.python.org/downloads/release/python-3118/)
+
 
 ## 1. Backend (Captura de Dados)
 
@@ -17,20 +24,38 @@ O backend é responsável por capturar os pacotes de rede.
 1. **Clone o repositório** (se ainda não fez):  
     ```bash
         git clone https://github.com/StefissonRafaelHonorato/Redes.git
-        cd backend
     ```
 
-2. **Crie um ambiente virtual** (recomendado):  
+2. **Acessar diretório do backend**:
     ```bash
-        python -m venv venv
-        # Ative o ambiente:
-        # Windows:
-        venv\Scripts\activate
-        # Linux/Mac:
-        source venv/bin/activate
+    cd Redes/backend
     ```
 
-3. **Instale as dependências**:  
+3.  **Crie um ambiente virtual com Python 3.11**:
+    O comando exato depende do seu sistema operacional. Escolha a opção correspondente abaixo.
+
+    ```bash
+    # --- No Windows (use o Python Launcher) ---
+    # Este comando garante que a versão 3.11 seja usada
+    py -3.11 -m venv venv
+
+    # --- No Linux ou macOS ---
+    # Use o comando com a versão explícita
+    python3.11 -m venv venv
+    ```
+
+4.  **Ative o ambiente virtual**:
+    Após a criação, ative-o para começar a usar.
+
+    ```bash
+    # No Windows:
+    .\venv\Scripts\activate
+
+    # No Linux/macOS:
+    source venv/bin/activate
+    ```
+
+5. **Instale as dependências**:  
     ```bash
         pip install -r requirements.txt
     ```
@@ -85,6 +110,7 @@ O backend possui testes unitários para verificar a captura e o processamento de
 
 1. Rode os testes:  
     ```bash
+    $env:PYTHONPATH = "$PWD"
     pytest tests/
     ```
 
@@ -144,13 +170,11 @@ Os resultados aparecerão no terminal e/ou abrirão uma janela do navegador most
 
 Requisitos do Python:
 
-- Python 3.10 ou superior
+- Python 3.11 ou superior
 
 - Pacotes listados em requirements.txt
 
 Requisitos do Frontend:
-
-- Node.js 18+
 
 - Angular CLI 16+
 
