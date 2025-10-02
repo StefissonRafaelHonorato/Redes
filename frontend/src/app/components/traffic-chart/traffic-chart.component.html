@@ -137,12 +137,23 @@
 
                                 <div class="mb-4">
                                     <label class="font-bold text-lg block mb-2">Score de Anomalia</label>
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-sm font-medium text-green-600">Normal</span>
-                                        <p-progressBar [value]="probabilityPercentage(pred.probability)"
-                                            [showValue]="false" class="flex-grow h-4"></p-progressBar>
-                                        <span class="text-sm font-medium text-red-600">Anômalo</span>
+
+                                    <div class="flex flex-col gap-1 w-full">
+                                        <!-- garante largura total -->
+                                        <div
+                                            style="justify-content: space-between; width: 100%; display: flex; flex-direction: row;">
+                                            <span style="color: #16a34a;">Normal</span>
+                                            <span style="color: #dc2626;">Anômalo</span>
+                                        </div>
+
+                                        <!-- força a barra a ocupar 100% -->
+                                        <div class="w-full">
+                                            <p-progressBar [value]="probabilityPercentage(pred.probability)"
+                                                [showValue]="false" style="width: 100%;" class="h-4">
+                                            </p-progressBar>
+                                        </div>
                                     </div>
+
                                     <div class="text-center mt-2 text-gray-700 font-semibold">
                                         Score: {{ pred.probability | number:'1.2-2' }}
                                     </div>
