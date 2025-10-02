@@ -5,6 +5,10 @@
     <h1 class="text-lg font-semibold mb-4">{{ selectedPeriodLabel }}</h1>
 
     <p-card header="Top 10 IPs por Volume de Tráfego" styleClass="col-span-1 xl:col-span-2 shadow-lg rounded-lg">
+        <div class="flex justify-between items-center mb-2 px-2">
+            <span class="font-semibold">Tráfego Total:</span>
+            <span class="font-mono">{{ totalTraffic() }}</span>
+        </div>
         <div class="relative h-[450px]">
             <canvas #trafficChart></canvas>
         </div>
@@ -94,7 +98,8 @@
                             <p-timeline [value]="data.captures" align="alternate">
                                 <ng-template pTemplate="content" let-event>
                                     <div>
-                                        {{ formatBytes(event.inbound) }} <strong>(Inbound)</strong> / {{ formatBytes(event.outbound)
+                                        {{ formatBytes(event.inbound) }} <strong>(Inbound)</strong> / {{
+                                        formatBytes(event.outbound)
                                         }}
                                         <strong>(Outbound)</strong>
                                     </div>

@@ -87,6 +87,8 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
     public isForecastLoading = signal(false);
     public forecastError = signal<string | null>(null);
 
+    public totalTraffic = signal<string>('0 Bytes');
+
     public periodActions: MenuItem[] = [
         { label: 'Tempo Real', icon: 'pi pi-bolt', command: () => this.updateSelectedPeriod('live'), tooltip: 'Ver tráfego em tempo real' },
         { label: 'Último Minuto', icon: 'pi pi-clock', command: () => this.updateSelectedPeriod('minute'), tooltip: 'Filtrar por último minuto' },
@@ -124,8 +126,13 @@ export class TrafficChartComponent implements AfterViewInit, OnDestroy {
     constructor() {
         effect(() => {
             const data = this.trafficData();
-            this.updateTrafficChart(this.trafficChart(), data);
-            this.updateProtocolChart(this.protocolChart(), data);
+            const total = data.reduce((acc, item) => acc + item.inbound + item.outbound, 0);
+            this.totalTraffic.set(this.formatBytes(total));
+        });
+
+        effect(() => {
+            this.updateTrafficChart(this.trafficChart(), this.trafficData());
+            this.updateProtocolChart(this.protocolChart(), this.trafficData());
         });
 
         effect(() => {
